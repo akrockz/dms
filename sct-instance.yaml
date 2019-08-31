@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS::Instance - SCT Instance'
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: String
+    ConstraintDescription: must be the name of an existing EC2 KeyPair
+    Default: coreservices-dms-keypair
+  InstanceType:
+    Type: String
+    Description: SCT EC2 instance type
+    Default: t2.large
+  VPC:
+    Type: String
+    Description: VPC to launch the instance into
+    Default: EnterpriseVpc3
+  ImageId:
+    Type: String
+    Description: Provide image name
+    Default: ami-05c39d3ebf2a6
+  Portfolio:
+    Type: String
+    Description: coreservice-dms Portfolio name
+  App:
+    Type: String
+    Description: coreservice-dms App name
+  SecurityStackName:
+    Type: String
+    Default: coreservices-dms-sct-security
+  InstanceCount:
+    Type: String
+Resources:
+  EC2Instance:
+    Type: 'AWS::EC2::Instance'
+    # CreationPolicy:
+    #   ResourceSignal:
+    #     Count: 1
+    #     Timeout: PT15M
+    Metadata:
+      'AWS::CloudFormation::Init':
+        config:
+          sources:
+            'C:\\Windows\\Temp': >-
+              https://s3.amazonaws.com/publicsctdownload/Windows/aws-schema-conversion-tool-1.0.latest.zip
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Ref ImageId
+      IamInstanceProfile: 
+        Fn::ImportValue: 
+          !Sub '${SecurityStackName}:InstanceProfileName'
+      InstanceInitiatedShutdownBehavior: stop
+      SecurityGroupIds:
+        - Fn::ImportValue: 
+            !Sub '${SecurityStackName}:SecurityGroupId'
+      SubnetId: 
+        Fn::ImportValue: 
+          !Sub 'core-network:${VPC}:PrivateSubnet${InstanceCount}Id'
+      Tags:
+        - Key: Portfolio
+          Value: !Ref Portfolio
+        - Key: App
+          Value: !Ref App
+Outputs:
+  InstanceId:
+    Value: !Ref EC2Instance
+    Export:
+      Name: !Sub '${AWS::StackName}:InstanceId'
+  InstancePrivateIp:
+    Value: !GetAtt 
+      - EC2Instance
+      - PrivateIp
+    Export:
+      Name: !Sub '${AWS::StackName}:InstancePrivateIp'
