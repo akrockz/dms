@@ -1,0 +1,140 @@
+- label: deploy-sct-security
+  type: create_stack
+  # depends_on:
+  #   - deploy-sct-instance
+  params:
+    template: sct-security.yaml
+    stack_name: "{{ core.Portfolio }}-{{ core.App }}-sct-security"
+    accounts:
+      - "37888847" # Nonprod-auto account
+    regions:
+      - ap-southeast-1  # Asia Pacific (Singapore)
+    parameters:
+      Portfolio: coreservices
+      App: dms
+
+- label: deploy-sct-instance
+  type: create_stack
+  depends_on:
+    - deploy-sct-security
+  params:
+    template: sct-instance.yaml
+    stack_name: "{{ core.Project }}-{{ core.App }}-sct-instance"
+    accounts:
+      - "37880647" # Nonprod-auto account
+      # - "65478254" # Prod-auto account
+    regions:
+      - ap-southeast-1  # Singapore
+    parameters:
+      Portfolio: coreservices
+      App: dms
+      InstanceCount: "1"
+
+- label: deploy-replication-security
+  type: create_stack
+  # depends_on:
+  #   - deploy-replication-instance
+  params:
+    template: dms-security.yaml
+    stack_name: "{{ core.Portfolio }}-{{ core.App }}-replication-security"
+    accounts:
+      - "3788647" # Nonprod-auto account
+      # - "65478214" # Prod-auto account
+    regions:
+      - ap-southeast-1  # Asia Pacific (Singapore)
+    parameters:
+      Portfolio: coreservices
+      App: dms
+
+- label: deploy-replication-subnetgroup
+  type: create_stack
+  # depends_on:
+  #   - deploy-replication-instance
+  params:
+    template: dms-replicationsubnetgroup.yaml
+    stack_name: "{{ core.Portfolio }}-{{ core.App }}-replication-subnetgroup"
+    accounts:
+      - "3788647" # Nonprod-auto account
+      # - "65478114" # Prod-auto account
+    regions:
+      - ap-southeast-1  # Asia Pacific (Singapore)
+    parameters:
+      Portfolio: coreservices
+      App: dms
+      
+- label: deploy-replication-instance
+  type: create_stack
+  depends_on:
+    - deploy-replication-security
+    - deploy-replication-subnetgroup
+  params:
+    template: dms-replicationinstance.yaml
+    stack_name: "{{ core.Project }}-{{ core.App }}-replication-instance"
+    accounts:
+        - "3788847" # Nonprod-auto account
+        # - "65478114" # Prod-auto account
+    regions:
+        - ap-southeast-1  # Singapore
+    parameters:
+      Portfolio: coreservices
+      App: dms
+
+- label: deploy-source-endpoint
+  type: create_stack
+  depends_on:
+    - deploy-replication-instance
+  params:
+    template: dms-source-endpoint.yaml
+    stack_name: "{{ core.Project }}-{{ core.App }}-source-endpoint"
+    accounts:
+      - "37880647" # Nonprod-auto account
+      # - "6547114" # Prod-auto account
+    regions:
+      - ap-southeast-1  # Singapore
+    parameters:
+      Portfolio: coreservice
+      App: dms
+      ServerName: "1912.1618.1134.1109" # Provide IP for on-prem DB or Endpoint for RDS.
+      Port: 40400
+      Username: DMS_SR
+      Password: dmssrv_87
+      DatabaseName: MKP37 # SID or Service name for on-prem. DB name for RDS
+
+- label: deploy-target-endpoint
+  type: create_stack
+  depends_on:
+    - deploy-replication-instance
+  params:
+    template: dms-target-endpoint.yaml
+    stack_name: "{{ core.Project }}-{{ core.App }}-target-endpoint"
+    accounts:
+      - "3780647" # Nonprod-auto account
+      # - "654782114" # Prod-auto account
+    regions:
+      - ap-southeast-1  # Singapore
+    parameters:
+      Portfolio: coreservices
+      App: dms
+      ServerName: "sm-abcapp-nonprod-18-mariadb.ch2ah0krztpb.ap-southeast-1.rds.amazonaws.com" # Provide RDS endpoint
+      Username: DMS_SRV1
+      Password: dmssrv_9871
+      DatabaseName: SQDDB1 # DB name for RDS
+      
+# - label: deploy-replication-task
+#   type: create_stack
+#   depends_on:
+#     - deploy-replication-instance
+#     - deploy-source-endpoint
+#     - deploy-target-endpoint
+#   params:
+#     template: dms-replicationtask.yaml
+#     stack_name: "{{ core.Project }}-{{ core.App }}-replication-task"
+#     accounts:
+#       - "378888647" # Nonprod-auto account
+#       # - "65498114" # Prod-auto account
+#     regions:
+#       - ap-southeast-1  # Singapore
+#     parameters:
+#       Portfolio: coreservices
+#       App: dms
+
