@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DMS Replication Task
+Parameters:
+  Portfolio:
+    Type: String
+    Description: coreservice-dms Portfolio name
+  App:
+    Type: String
+    Description: coreservice-dms App name
+  ReplInstanceStackName:
+    Type: String
+    Description: Provide the replication instance stack name
+    Default: coreservices-dms-replication-instance
+  SourceEndpointStackName:
+    Type: String
+    Description: Provide the source endpoint stack name
+    Default: coreservices-dms-source-endpoint
+  TargetEndpointStackName:
+    Type: String
+    Description: Provide the target endpoint stack name
+    Default: coreservices-dms-target-endpoint
+Resources:
+  ReplicationTask:
+    Type: 'AWS::DMS::ReplicationTask'
+    Properties:
+      MigrationType: full-load
+      ReplicationInstanceArn: !ImportValue 
+        'Fn::Sub': '${ReplInstanceStackName}:ReplicationInstanceArn'
+      SourceEndpointArn: !ImportValue 
+        'Fn::Sub': '${SourceEndpointStackName}:SourceEndpointArn'
+      TableMappings: >-
+        { "rules": [ { "rule-type": "selection", "rule-id": "1", "rule-name":
+        "1", "object-locator": { "schema-name": "DMS_S1RV", "table-name": "%" },
+        "rule-action": "include" } ] }
+      TargetEndpointArn: !ImportValue 
+        'Fn::Sub': '${TargetEndpointStackName}:TargetEndpointArn'
