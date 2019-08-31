@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS::Instance - dms - security items'
+Parameters:
+  Portfolio:
+    Description: coreservice-dms Portfolio name
+    Type: String
+  App:
+    Description: coreservice-dms App name
+    Type: String
+  VPC:
+    Description: coreservice-dms vpc name
+    Type: String
+    Default: EnterpriseVpc3
+Resources:
+  DMSSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub '${Portfolio}-${App}-dms-sg'
+      GroupDescription: Allow traffic through to the dms instances.
+      SecurityGroupIngress:
+        # - IpProtocol: tcp
+        #   FromPort: 3306
+        #   ToPort: 3306
+        #   CidrIp: 10.0.0.0/8
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 101.1119.16.0/21
+        - IpProtocol: tcp
+          FromPort: 40400
+          ToPort: 40400
+          CidrIp: 101.1191.16.0/21
+        - IpProtocol: tcp
+          FromPort: 40400
+          ToPort: 40400
+          CidrIp: 1921.1168.134.109/32
+        - IpProtocol: tcp
+          FromPort: 40400
+          ToPort: 40400
+          CidrIp: 101.1191.126.48/28
+        - IpProtocol: tcp
+          FromPort: 40400
+          ToPort: 40400
+          CidrIp: 101.1119.126.64/27
+      Tags:
+        - Key: Portfolio
+          Value: !Ref Portfolio
+        - Key: App
+          Value: !Ref App
+      VpcId: 
+        Fn::ImportValue: 
+            !Sub 'core-network:${VPC}:VpcId'
+      
+Outputs:
+  DMSSecurityGroupId:
+    Value: !Ref DMSSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}:DMSSecurityGroupId'
