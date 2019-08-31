@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS::Instance - dms - replication subnet group'
+
+Parameters:
+  Portfolio:
+    Description: coreservice-dms Portfolio name
+    Type: String
+  App:
+    Description: coreservice-dms App name
+    Type: String
+  VPC:
+    Description: coreservice-dms vpc name
+    Type: String
+    Default: EnterpriseVpc3
+
+Resources:
+  ReplicationSubnetGroup:
+    Type: "AWS::DMS::ReplicationSubnetGroup" 
+    Properties: 
+      ReplicationSubnetGroupDescription: !Sub '${Portfolio}-${App}-subnet group'
+      ReplicationSubnetGroupIdentifier: !Sub '${Portfolio}-${App}-repsubnetgroup'
+      SubnetIds: 
+        - !ImportValue 
+          'Fn::Sub': 'core-network:${VPC}:PrivateSubnet1Id'
+        - !ImportValue 
+          'Fn::Sub': 'core-network:${VPC}:PrivateSubnet2Id'
+      Tags: 
+        - Key: Portfolio
+          Value: !Ref Portfolio
+        - Key: App
+          Value: !Ref App
+Outputs:
+  ReplicationSubnetGroupIds:
+    Value: !Ref ReplicationSubnetGroup
+    Export:
+      Name: !Sub '${AWS::StackName}:ReplicationSubnetGroupIds'
+    
