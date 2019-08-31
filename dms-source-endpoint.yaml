@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DMS Source Endpoint
+Parameters:
+  Portfolio:
+    Type: String
+    Description: coreservice-dms Portfolio name
+  App:
+    Type: String
+    Description: coreservice-dms App name
+  ReplInstanceStackName:
+    Type: String
+    Description: Replication Instance Stack Name
+    Default: coreservices-dms-replication-instance
+  DatabaseName:
+    Type: String
+    Description: Database Name
+  EndpointType:
+    Type: String
+    Description: Endpoint Type
+    Default: source
+  EngineName:
+    Type: String
+    Description: Engine name
+    Default: oracle
+  Password:
+    Type: String
+    Description: Password
+  Port:
+    Type: Number
+    Description: Port of database
+    Default: 1522
+  ServerName:
+    Type: String
+    Description: Server name
+  Username:
+    Type: String
+    Description: User name for database
+  
+Resources:
+  SourceEndpoint:
+    Type: 'AWS::DMS::Endpoint'
+    Properties:
+      EndpointIdentifier: !Sub '${Portfolio}-${App}-source-endpoint'
+      DatabaseName: !Ref DatabaseName
+      EndpointType: !Ref EndpointType
+      EngineName: !Ref EngineName
+      Password: !Ref Password
+      Port: !Ref Port
+      ServerName: !Ref ServerName
+      Username: !Ref Username
+      Tags:
+        - Key: Portfolio
+          Value: !Ref Portfolio
+        - Key: App
+          Value: !Ref App
+Outputs:
+  SourceEndpointArn:
+    Value: !Ref SourceEndpoint
+    Export:
+      Name: !Sub '${AWS::StackName}:SourceEndpointArn'
