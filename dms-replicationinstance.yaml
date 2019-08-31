@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'AWS::DMS - ReplicationInstance'
+Parameters:
+  RepInstanceClass:
+    Description: Provide the instance type
+    Type: String
+    Default: dms.t2.small
+    AllowedValues:
+      - dms.t2.micro
+      - dms.t2.small
+      - dms.t2.medium
+      - dms.t2.large
+      - dms.c4.large
+      - dms.c4.xlarge
+      - dms.c4.2xlarge
+      - dms.c4.4xlarge
+  EngineVersion:
+    Type: String
+    Description: Provide engine version
+    Default: "3.3.0"
+  Storage:
+    Description: Provide storage
+    Type: Number
+    Default: 50
+  MajorVerUpgrade:
+    Description: Set major version upgrade
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: false
+  AutoMinorVerUpgrd:
+    Description: Set auto minor version upgrade
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: true
+  MaintenanceWindow:
+    Description: 'Format: ddd:hh24:mi-ddd:hh24:mi'
+    Type: String
+    Default: 'Sat:06:05-Sat:06:35'
+  Portfolio:
+    Type: String
+    Description: coreservice-dms Portfolio name
+  App:
+    Type: String
+    Description: coreservice-dms App name
+  DmsSubnetGroupStackName:
+    Type: String
+    Default: coreservices-dms-replication-subnetgroup
+  DmsSecurityGroupStackName:
+    Type: String
+    Default: coreservices-dms-replication-security
+Resources:
+  ReplicationInstance:
+    Type: 'AWS::DMS::ReplicationInstance'
+    Properties:
+      ReplicationInstanceIdentifier: !Sub '${Portfolio}-${App}-repinstance'
+      ReplicationInstanceClass: !Ref RepInstanceClass
+      EngineVersion: !Ref EngineVersion
+      AllocatedStorage: !Ref Storage
+      AllowMajorVersionUpgrade: !Ref MajorVerUpgrade
+      AutoMinorVersionUpgrade: !Ref AutoMinorVerUpgrd
+      MultiAZ: false
+      PreferredMaintenanceWindow: !Ref MaintenanceWindow
+      PubliclyAccessible: false
+      VpcSecurityGroupIds: 
+        - Fn::ImportValue: 'coreservices-dms-replication-security:DMSSecurityGroupId'
+            # !Sub ${DmsSecurityGroupStackName}:DMSSecurityGroupId'
+      ReplicationSubnetGroupIdentifier:
+        Fn::ImportValue: coreservices-dms-replication-subnetgroup:ReplicationSubnetGroupIds
+          # !Sub '${DmsSubnetGroupStackName}:ReplicationSubnetGroupIds'
+      Tags:
+        - Key: Portfolio
+          Value: !Ref Portfolio
+        - Key: App
+          Value: !Ref App
+Outputs:
+  # ReplicationInstancePrivateIP:
+  #   Value: !GetAtt 
+  #     - ReplicationInstance
+  #     - ReplicationInstancePrivateIpAddresses
+  ReplicationInstanceArn:
+    Value: !Ref ReplicationInstance
+    Export:
+      Name: !Sub '${AWS::StackName}:ReplicationInstanceArn'
